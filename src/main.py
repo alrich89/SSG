@@ -2,13 +2,14 @@ from htmlnode import extract_title, markdown_to_html_node
 
 import os
 import shutil
+import sys
 
 
 PUBLIC_FOLDER = "public"
 STATIC_FOLDER = "static"
 
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(basepath, from_path, template_path, dest_path):
     os.makedirs(os.path.dirname(dest_path), exist_ok=True)
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(os.path.abspath(from_path), mode='r') as f:
@@ -17,11 +18,11 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(markdown_file)
     with open(os.path.abspath(template_path), mode='r') as f1:
         template_file = f1.read()
-    page_html = template_file.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html())
+    page_html = template_file.replace("{{ Title }}", title).replace("{{ Content }}", html_node.to_html()).replace('href="/', f'href="{basepath}').replace('src="/', f'src="{basepath}')
     with open(os.path.abspath(dest_path), mode='w') as f2:
         f2.write(page_html)
 
-def generate_pages_recursive(current_dir, dir_path_content, template_path, des_dir_path):
+def generate_pages_recursive(basepath, current_dir, dir_path_content, template_path, des_dir_path):
     #use the generate_page function while recursively stepping through the folders from content.
     content_path  = os.path.abspath(dir_path_content)
     if current_dir == None:
@@ -35,9 +36,9 @@ def generate_pages_recursive(current_dir, dir_path_content, template_path, des_d
     os.makedirs(destination_path, exist_ok=True)
     for entry in current_level_entries:
         if os.path.isfile(os.path.join(current_path, entry)) and os.path.splitext(entry)[1] == ".md":
-            generate_page(os.path.join(current_path, entry), template_path, os.path.join(destination_path,  os.path.splitext(entry)[0] + ".html"))
+            generate_page(basepath, os.path.join(current_path, entry), template_path, os.path.join(destination_path,  os.path.splitext(entry)[0] + ".html"))
         elif os.path.isdir(os.path.join(current_path, entry)):
-            generate_pages_recursive(os.path.join(current_path, entry), dir_path_content, template_path, des_dir_path)
+            generate_pages_recursive(basepath, os.path.join(current_path, entry), dir_path_content, template_path, des_dir_path)
     return
 
 def static_to_public():
@@ -68,9 +69,13 @@ def static_to_public():
 
 
 def main():
+    basepath = "/"
+    if len(sys.argv) == 2:
+        basepath = sys.argv[1]
     static_to_public()
     #generate_page("content/index.md", "template.html", "public/index.html")
-    generate_pages_recursive(None, "content", "template.html", PUBLIC_FOLDER)
+    generate_pages_recursive(basepath, None, "content", "template.html", PUBLIC_FOLDER)
+
 
 if __name__ == "__main__":
     main()
