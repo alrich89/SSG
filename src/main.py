@@ -5,7 +5,7 @@ import shutil
 import sys
 
 
-PUBLIC_FOLDER = "public"
+PUBLIC_FOLDER = "docs" #"public" 
 STATIC_FOLDER = "static"
 
 
